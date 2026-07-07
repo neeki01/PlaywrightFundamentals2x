@@ -55,7 +55,15 @@ npx playwright show-report
 .
 ├── tests/
 │   ├── 01_Basics/                    # Test anatomy, annotations (skip/only/fail/slow)
-│   ├── 02_First_tests/               # Browser → Context → Page (BCP) hierarchy
+│   ├── 02_first_tests/               # Browser → Context → Page (BCP) hierarchy
+│   │   ├── task.spec.ts              # Multi-context test with two browser contexts
+│   │   ├── 231_First_Running_Verify.spec.ts
+│   │   ├── 232_BCP.spec.ts
+│   │   ├── 233_BCP_MultipeContext.spec.ts
+│   │   ├── 234_BCP_Multiple_Pages.spec.ts
+│   │   ├── 235_TEST_I_PW.spec.ts
+│   │   ├── 236_BCP_TEST_PW.spec.ts
+│   │   └── 237_BCP_Test_Options.spec.ts
 │   ├── 03_Locators_Commands/ … 23_Advance_Framework/   # Curriculum modules (scaffolded, WIP)
 │   ├── Template.spec.ts              # Empty spec scaffold, copy for new tests
 │   └── example.spec.ts               # Sample: title check + "Get started" navigation
@@ -145,8 +153,33 @@ Defined in `playwright.config.ts`:
 - `reporter: 'html'` — generate an HTML report
 - `trace: 'on'`, `screenshot: 'on'`, `video: 'on'` — full debug artifacts for every run (heavier, dial back for CI)
 - `headless: false`, `viewport: 1920x1080` — watch tests run during course recording
-- Projects: Firefox active; Chromium and WebKit currently commented out
+- Projects: **Chromium** active (default); Firefox and WebKit currently commented out
 - CI-aware retries and workers (`process.env.CI`)
+
+### task.spec.ts — Multi-Context Test (02_first_tests)
+
+This spec demonstrates manual **Browser → Context → Page** creation for testing two sessions with **isolated state**:
+
+```ts
+test( 'Verify our first TC', async ( { browser } ) => {
+    const contex1 = await browser.newContext( {
+        viewport: { width: 1920, height: 1080 },
+    } )
+    const page1 = await contex1.newPage();
+    await page1.goto( "https://app.thetestingacademy.com/playwright/ttacart/" );
+
+    const contex2 = await browser.newContext()
+    const page2 = await contex2.newPage();
+    await page2.goto( "https://tta-bank-digital-973242068062.us-west1.run.app/" );
+
+    page1.close();
+    page2.close();
+    contex1.close();
+    contex2.close();
+} );
+```
+
+**Key learning:** Both `goto` calls **must** be awaited. Missing `await` on an async navigation throws an unhandled rejection that tears down the page/context, causing a misleading "browser has been closed" error downstream.
 
 ## Learn More
 
