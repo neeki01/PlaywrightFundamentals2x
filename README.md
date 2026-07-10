@@ -64,7 +64,10 @@ npx playwright show-report
 │   │   ├── 235_TEST_I_PW.spec.ts
 │   │   ├── 236_BCP_TEST_PW.spec.ts
 │   │   └── 237_BCP_Test_Options.spec.ts
-│   ├── 03_Locators_Commands/ … 23_Advance_Framework/   # Curriculum modules (scaffolded, WIP)
+│   ├── 03_Locators_Commands/
+│   │   ├── 238_LS.spec.ts              # Basic page navigation to Testing Academy cart
+│   │   ├── 239_Project_VWO_Login.spec.ts  # VWO login form: CSS locators, auto-wait, fill, click, error assertion
+│   │   └── … 23_Advance_Framework/   # Curriculum modules (scaffolded, WIP)
 │   ├── Template.spec.ts              # Empty spec scaffold, copy for new tests
 │   └── example.spec.ts               # Sample: title check + "Get started" navigation
 ├── playwright.config.ts    # Playwright configuration
@@ -180,6 +183,31 @@ test( 'Verify our first TC', async ( { browser } ) => {
 ```
 
 **Key learning:** Both `goto` calls **must** be awaited. Missing `await` on an async navigation throws an unhandled rejection that tears down the page/context, causing a misleading "browser has been closed" error downstream.
+
+### 03 — Locators & Commands
+
+**Concept:** Locators are Playwright's way to find elements on a page. Unlike raw DOM queries, a `locator` auto-waits for the element to be visible, enabled, and stable before acting — no manual `waitFor*` calls needed. CSS selectors (`#id`, `.class`, `[name=""]`) are the default; Playwright also supports role, text, and test-id locators.
+
+**Why:** Manual `sleep()` or `waitForSelector()` calls are brittle and slow. Playwright's auto-waiting (actionability checks before every click/fill) makes tests resilient to timing flakiness.
+
+**Q&A: why use this?**
+- **Q: What's the difference between `page.locator()` and `page.$()`?** A: `page.locator()` returns a lazy Locator that can be reused and re-queried; `page.$()` returns a raw ElementHandle that goes stale once the DOM changes. Always use `locator`.
+- **Q: When does Playwright throw "strict mode"?** A: When a locator matches more than one element and you call an action (`.click()`, `.fill()`). Use `.first()`, `.last()`, `.nth(n)`, or a more specific selector.
+
+```ts
+// TC#1 — VWO login error validation with auto-wait (239_Project_VWO_Login.spec.ts)
+test("VWO login error", async ({ page }) => {
+    await page.goto("https://app.vwo.com/#login");
+    const email = page.locator("#login-username");
+    const password = page.locator("#login-password");
+    const button = page.locator("#js-login-btn");
+    await email.fill("admin@admin.com");
+    await password.fill("pass123");
+    await button.click();
+    const error = page.locator("#js-notification-box-msg");
+    await expect(error).toContainText("Your email, password, IP address or location did not match");
+});
+```
 
 ## Learn More
 
